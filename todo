@@ -1,0 +1,106 @@
+6
+* database
+ - history of games by integer id.
+   - 3 sets of 12 cards. a list of trios of each round.
+   - users who played.
+   - date of the game.
+   - optional title for the game.
+ - planned games by integer id.
+   - users who will play.
+   - date of when the game will happen. 
+   - optional title for the game.
+ - direct offers for games.
+   - users who will play.
+   - date of when the game will happen. (if it starts when accepted, then set this to 0, and give an extra minute for the first player in the first round)
+   - optional title for the game.
+ - open offers for games.
+   - the user who made the offer.
+   - optional title for the game.
+ - users by pubkey.
+   - links to history of games played.
+   - links to planned games.
+   - links to active games.
+   - links to received direct offers.
+   - links to given direct offers.
+   - links to given open offers.
+   - customized message.
+ - active games by integer id.
+   - history of rounds so far.
+   - which if any player has played a card in the current round.
+   - timer for the players.
+   - optional title.
+
+16
+* normal api
+  - lookup user by pubkey.
+  - lookup historical or planned or active game by id.
+  - lookup recent games
+  - lookup active games
+  - lookup open offers
+  - lookup direct offers
+  - a list of active games.
+* signed api
+  - play a card
+  - make a direct offer to play a game
+  - cancel a direct offer.
+  - accept a direct offer to play a game
+  - make an open offer to play a game
+  - cancel an open offer.
+  - accept an open offer to play a game
+  - set your user message
+* delay response api
+  - active_game_state(id, rounds_seen)
+
+8
+* pages
+ 1)active game board
+  - your score
+  - their score
+  - your pubkey and a link to your user info.
+  - their pubkey and a link to their user info.
+  - cards in your hand
+  - cards in their hand
+  - cards in the pool
+ 2)user info (home page)
+  - optional message.
+  - history of games played.
+  - planned games.
+  - active games.
+  - make direct offer with this user link.
+  - link to open offers for games page.
+  - link to active games page.
+ 3)planned game
+  - who will play, and links to user info.
+  - date of when it will happen.
+  - optional title.
+  - game id.
+ 4) make direct offer.
+   - optional title
+   - who with? (auto-fill from url)
+   - date to start. 
+ 5)direct offers to you.
+  - who made the offer.
+  - when the game will happen.
+  - optional title.
+  - accept button.
+ 6)make open offer.
+   - optional title
+ 7)open offers for games
+  - link to make open offer page.
+  - who made the offer. a link to their user info.
+  - optional title for the game.
+ 8)active games
+  - current round.
+  - who is player.
+  - optional title
+
+garbage
+* remove users after 30 days of no new games.
+* remove users after 2 days if they play no games.
+* remove historical games if both users are gone.
+* remove direct offers after the date when it would happen.
+* remove direct offers after 24 hours.
+* remove direct offers if the user who made it is gone.
+* remove open offers after 1 hour.
+* remove active games if someone loses. have a max setting on the timer.
+
