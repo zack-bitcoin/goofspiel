@@ -18,15 +18,18 @@ function keys_function1() {
     save_name.type = "text";
     save_name.value = "Amoveo private key";
     var load_text = document.createTextNode("get key from file");
-    document.body.appendChild(account_title);
+    /*
+      document.body.appendChild(account_title);
     document.body.appendChild(div);
     div.appendChild(load_text);
     var file_selector = document.createElement("input");
     file_selector.type = "file";
     file_selector.onchange = load_keys;
     div.appendChild(file_selector);
+    */
     //div.appendChild(br());
-    if(configure["new_account"]){
+    if(false){
+    //if(configure["new_account"]){
         var save_button = button_maker2("Generate new account. Saves the private key to a file.", save_keys);
         //div.appendChild(br());
     }
@@ -41,7 +44,8 @@ function keys_function1() {
     var pub_div = document.createElement("div");
     div.appendChild(br());
     div.appendChild(pub_div);
-    if(configure["new_account"]){
+    //if(configure["new_account"]){
+    if(false){
         var new_pubkey_button = button_maker2("generate keys from passphrase", new_keys_check);
         div.appendChild(br());
         div.appendChild(save_name);
@@ -58,7 +62,8 @@ function keys_function1() {
     };
 */
     var new_pubkey_div = document.createElement("div");
-    if(configure["new_account"]){
+    //if(configure["new_account"]){
+    if(false){
         div.appendChild(new_pubkey_button);
         div.appendChild(new_pubkey_div);
         div.appendChild(br());
@@ -209,6 +214,9 @@ function keys_function1() {
             update_pubkey();
         }
     }
+    function set_keys(k) {
+        keys_internal = k;
+    }
     function check_balance(Callback) {
         var trie_key = pubkey_64();
         //var top_hash = hash(headers_object.serialize(headers_object.top()));
@@ -287,6 +295,9 @@ function keys_function1() {
             update_balance_callback: (function (x) {
                 update_balance_callback = x;}),
             compress: compress_pub,
-            decompress: decompress_pub };
+            decompress: decompress_pub,
+            new_keys_entropy: new_keys_entropy,
+            set_keys: set_keys
+           };
 }
 var keys = keys_function1();

@@ -39,7 +39,10 @@ init([]) ->
     {ok, {SupFlags, ChildSpecs}}.
 
 %% internal functions
-keys() ->[nonces].
+keys() -> 
+    [nonces, active_games, historical_games, 
+     direct_offers, game_id, open_offers, 
+     planned_games, users, usernames, pubkeys].
 child_maker([]) -> [];
 child_maker([H|T]) ->
     [#{id => H,

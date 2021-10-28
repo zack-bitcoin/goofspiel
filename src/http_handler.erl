@@ -23,98 +23,173 @@ init(_Type, Req, _Opts) ->
     {ok, Req, no_state}.
 terminate(_Reason, _Req, _State) -> ok.
 
-%unsigned API
-doit({nonce, Pub}) ->
-    {ok, nonces:check(Pub)};
-doit({balance, Pub}) ->
-    {ok, balances:balance(Pub)};
-doit({balance, Pub, MID}) ->
-    {ok, balances:balance(Pub, MID)};
-doit({markets}) ->
-    {ok, markets:list()};
-doit({market, MID}) ->
-    {ok, markets:lookup(MID)};
+doit({user_id, Pub}) ->
+%  lookup user ID by pubkey or username.
+    case pubkeys:read(Pub) of
+        error -> 
+            case usernames:read(Pub) of
+                error -> {ok, "does not exist"};
+                Y -> Y
+            end;
+        X -> X
+    end;
+doit({user, ID}) -> users:read(ID);
+doit({nonce, UID}) -> nonces:check(UID);
+doit({open_offer, GID}) ->
+    open_offers:read(GID);
+doit({direct_offer, GID}) ->
+    direct_offers:read(GID);
+doit({planned_game, GID}) ->
+    planned_games:read(GID);
+doit({active_game, GID}) ->
+    active_games:read(GID);
+doit({historical_game, GID}) ->
+    historical_games:read(GID);
+doit({delay_game, GID, RoundsSeen}) ->
+    %responds when the game state advances to the next round.
+    Delay = 300,%in tenths of a second.
+    active_games:read_round(GID, RoundsSeen, Delay);
+    
+doit({open_offers}) ->
+    open_offers:all();
+
+
 
 %signed API
-doit({buy_shares, Stx}) ->
+doit({play, Stx}) -> 
     F = fun(Tx) ->
-                {buy_shares, Pub, _, Amount,
-                 MID} = Tx,
-                balances:buy_shares(Pub, Amount, MID)
+                {play, Pub, _, GID, PID, 
+                 Card} = Tx,
+                {ok, Pub} = pubkeys:read(PID),
+                active_games:play(GID, PID, Card)
         end,
     signed_tx(Stx, F, false);
-doit({combine_shares, Stx}) ->
+doit({make_direct_offer, Stx}) ->
     F = fun(Tx) ->
-                {combine_shares, Pub, _,
-                 MID} = Tx,
-                balances:combine_shares(Pub, MID)
+                {make_direct_offer, Pub, _, P1, P2,
+                Date, Title, Timer} = Tx,
+                {ok, Pub} = pubkeys:read(P1),
+                G = direct_offer:make_game(
+                      P1, P2, Date, Title, Timer),
+                GID = direct_offers:store(G),
+                users:new_direct_offer(P1, P2, GID)
         end,
     signed_tx(Stx, F, false);
-doit({bet, Stx}) ->
+doit({cancel_direct_offer, Stx}) ->
     F = fun(Tx) ->
-                {bet, Pub, _, MID,
-                 B, Amount} = Tx,
-                B2 = case B of
-                         1 -> true;
-                         0 -> false
-                     end,
-                success = 
-                    balances:lose_shares(
-                      Pub, MID, not(B2), Amount),
-                Gain = markets:bet(
-                         B2, MID, Amount),
-                balances:get_shares(
-                  Pub, MID, B2, Gain)
+                {cancel_direct_offer, Pub, _, 
+                 P1, GID} = Tx,
+                {ok, Pub} = pubkeys:read(P1),
+                Offer = direct_offers:read(GID),
+                %verify that Pub made this offer.
+                P1 = direct_offers:player1(Offer),
+                P2 = direct_offers:player2(Offer),
+                direct_offers:remove(GID),
+                users:cancel_direct_offer(P1, P2, GID)
         end,
     signed_tx(Stx, F, false);
-doit({spend, Stx}) ->
+doit({accept_direct_offer, Stx}) ->
     F = fun(Tx) ->
-                {spend, From, _,
-                 To, Amount} = Tx,
-                balances:spend(From, To, Amount)
+                {accept_direct_offer, Pub2, _, 
+                 P2, GID} = Tx,
+                {ok, Pub2} = pubkeys:read(P2),
+                Offer = direct_offers:read(GID),
+                P1 = direct_offers:player1(Offer),
+                P2 = direct_offers:player2(Offer), %check that they received this offer.
+                Title = direct_offers:title(Offer),
+                Date = direct_offers:date(Offer),
+                TimeSpan = direct_offers:timer(Offer),
+                direct_offers:remove(GID),
+                active_games:new(
+                  Title, P1, P2, Date, 
+                  TimeSpan, GID),
+                users:cancel_direct_offer(P1, P2, GID),
+                users:new_active_game(P1, P2, GID)
+        end,
+    signed_tx(Stx, F, false);
+doit({delay_offers, Stx}) ->
+    %responds when you receive a direct offer to play a game.
+    F = fun(Tx) ->
+                {delay_offers, Pub, _, 
+                 P1, N} = Tx,
+                {ok, Pub} = pubkeys:read(P1),
+                Delay = 300,%in tenths of a second
+                users:delay_offers(P1, N, Delay)
+        end,
+    signed_tx(Stx, F, false);
+doit({make_open_offer, Stx}) ->
+    F = fun(Tx) ->
+                {make_open_offer, Pub, _, 
+                 P1, Title, TimeSpan} = Tx,
+                {ok, Pub} = pubkeys:read(P1),
+                G = open_offers:make_game(
+                  Pub, Title, TimeSpan),
+                GID = open_offers:store(G),
+                users:new_open_offer(P1, GID)%todo
+        end,
+    signed_tx(Stx, F, false);
+doit({cancel_open_offer, Stx}) ->
+    F = fun(Tx) ->
+                {cancel_open_offer, Pub, _,
+                P1, GID} = Tx,
+                {ok, Pub} = pubkeys:read(P1),
+                {ok, Offer} = open_offers:read(GID),
+                P1 = open_offers:player1(Offer),
+                open_offers:remove(GID),
+                users:remove_open_offer(P1, GID)
+        end,
+    signed_tx(Stx, F, false);
+doit({accept_open_offer, Stx}) ->
+    F = fun(Tx) ->
+                {accept_open_offer, Pub2, _,
+                 P2, GID} = Tx,
+                {ok, Pub2} = pubkeys:read(P2),
+                {ok, Offer} = open_offers:read(GID),
+                P1 = open_offers:player1(Offer),
+                TimeSpan = open_offers:timer(Offer),
+                Title = open_offers:title(Offer),
+                open_offers:remove(GID),
+                users:remove_open_offer(P1, GID),
+                Date = 0,
+                active_games:new(
+                  Title, P1, P2, Date, 
+                  TimeSpan, GID),
+                users:new_active_game(P1, P2, GID)
+        end,
+    signed_tx(Stx, F, false);
+doit({create_account, Stx}) ->
+    F = fun(Tx) ->
+                {create_account, Pub, _, Name} = Tx,
+                error = usernames:read(Name),%name isn't used already
+                UID = users:store(),
+                pubkeys:store(UID, Pub),
+                usernames:store(Name, UID),
+                UID
+        end,
+    signed_tx(Stx, F, false);
+doit({set_message, Stx}) ->
+    F = fun(Tx) ->
+                {set_message, Pub, _, P1, Msg} = Tx,
+                {ok, Pub} = pubkeys:read(P1),
+                users:set_message(P1, Msg)
         end,
     signed_tx(Stx, F, false);
 
-%admin API
-doit({oracle, Stx}) -> 
-    F = fun(Tx) ->
-                {oracle, _, _,
-                 MID, Result} = Tx,
-                balances:oracle_result(MID, Result),
-                markets:remove(MID)
-        end,
-    signed_tx(Stx, F, true);
-doit({new_market, Stx}) ->
-    F = fun(Tx) ->
-                {new_market, _, _, 
-                 Question, True, False} = Tx,
-                MID = markets:new(
-                        Question, True, False),
-                balances:add_market(MID),
-                MID
-        end,
-    signed_tx(Stx, F, true);
-doit({inflate, Stx}) ->
-    F = fun(Tx) ->
-                {inflate, _, _, To, Amount} = Tx,
-                balances:inflate(To, Amount)
-        end,
-    signed_tx(Stx, F, true);
 doit({test}) ->
     {ok, <<"success">>}.
 
-signed_tx(Stx, F, AdminCheck) ->
+signed_tx(Stx, F, _AdminCheck) ->
     true = signing:verify(Stx),
     Tx = element(2, Stx),
     Pub = element(2, Tx),
     Nonce = element(3, Tx),
-    true = not(AdminCheck) or 
-        admin:check(Pub),
+    %true = not(AdminCheck) or 
+    %    admin:check(Pub),
     PrevNonce = nonces:check(Pub),
     true = Nonce > PrevNonce,
     X = F(Tx),
     nonces:update(Pub, Nonce),
-    X.
+    {ok, X}.
 
 test() ->
     {Pub, Priv} = signing:new_key(),

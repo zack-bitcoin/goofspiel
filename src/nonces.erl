@@ -28,11 +28,11 @@ handle_cast({update, Pub, Nonce}, X) ->
     {noreply, X2};
 handle_cast(_, X) -> {noreply, X}.
 handle_call({check, Pub}, _From, X) -> 
-    N2 = case dict:find(Pub, X) of
-             error -> 0;
-             {ok, N} -> N
-         end,
-    {reply, N2, X};
+    A = case dict:find(Pub, X) of
+            error -> 0;
+            B -> B
+        end,
+    {reply, A, X};
 handle_call(_, _From, X) -> {reply, X, X}.
 
 update(Pub, Nonce) ->
