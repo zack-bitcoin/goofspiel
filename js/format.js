@@ -595,3 +595,15 @@ var configure = {};
 configure["new_account"] = true;
 configure["watch_only_account"] = true;
 configure["channel_view"] = true;
+
+
+function load_keys(){
+    var v = localStorage.getItem("goofspiel");
+    if(!(v)){
+        window.open("login.html", "_self");
+    }
+    var [priv, aid] = JSON.parse(localStorage.getItem("goofspiel"));
+    var key = keys.keys_from_priv(priv);
+    keys.set_keys(key);
+    return(aid);
+};

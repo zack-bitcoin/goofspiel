@@ -91,6 +91,9 @@ function keys_function1() {
     function new_keys_entropy(x) {
         return ec.genKeyPair({entropy: hash(serialize([x]))});
     }
+    function keys_from_priv(x) {
+        return(ec.keyFromPrivate(x, "hex"));
+    }
     function new_keys() {
         return ec.genKeyPair();
     }
@@ -297,7 +300,8 @@ function keys_function1() {
             compress: compress_pub,
             decompress: decompress_pub,
             new_keys_entropy: new_keys_entropy,
-            set_keys: set_keys
+            set_keys: set_keys,
+            keys_from_priv: keys_from_priv
            };
 }
 var keys = keys_function1();

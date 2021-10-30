@@ -13,10 +13,19 @@ handle(Req, State) ->
     F = case F0 of
 	       <<"/test.js">> -> F0;
 	       <<"/test.html">> -> F0;
+	       <<"/history.html">> -> F0;
+	       <<"/history.js">> -> F0;
+	       <<"/game.html">> -> F0;
+	       <<"/game.js">> -> F0;
+	       <<"/open_offers.html">> -> F0;
+	       <<"/open_offers.js">> -> F0;
+	       <<"/user.html">> -> F0;
+	       <<"/user.js">> -> F0;
 	       <<"/login.html">> -> F0;
 	       <<"/login.js">> -> F0;
 	       <<"/register.html">> -> F0;
 	       <<"/register.js">> -> F0;
+	       <<"/links.js">> -> F0;
 	       <<"/home.html">> -> F0;
 	       <<"/admin.html">> -> F0;
 	       <<"/keys.js">> -> F0;

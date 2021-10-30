@@ -20,6 +20,7 @@ var rpc = (function() {
         return new Promise(function(resolve, reject){
             let xmlhttp = new XMLHttpRequest();
             xmlhttp.open("POST", u);
+            //xmlhttp.timout = 35000;
             xmlhttp.onload = function() {
                 if (this.status >= 200 && this.status < 300) {
                     resolve(JSON.parse(xmlhttp.response)[1]);

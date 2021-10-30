@@ -3,7 +3,7 @@
 -export([start_link/0,code_change/3,handle_call/3,handle_cast/2,handle_info/2,init/1,terminate/2,
         new/6, play/3, read/1, read_round/3,
         test/1]).
--define(LOC, "active_games.erl").
+-define(LOC, "active_games.db").
 -record(game, 
         {hands = [], player1, player2, date, 
          title = "", card1 = 0, card2 = 0, 
@@ -63,10 +63,15 @@ player_number(P, V) ->
 play_internal(GID, P, C, X) ->
     case dict:find(GID, X) of
         error -> X;
-        {ok, (V = #game{timer = Timer,
+        {ok, (V = #game{timer = Timer0,
                     time_span = Span,
                     card1 = C1,
-                    card2 = C2})} ->
+                    card2 = C2,
+                        hands = Hands})} ->
+            Timer = case Hands of
+                        [] -> max(1200, Timer0);%at least 2 minutes for first move.
+                        _ -> Timer0
+                    end,
             N = player_number(P, V),
             TimeoutCheck = expired(Timer, Span),
             AlreadyPlayedCheck = 
@@ -231,35 +236,42 @@ play(GID, P, C) ->
     true = C < 14,
     gen_server:cast(?MODULE, {play, GID, P, C}).
 read(ID) ->
-    G = gen_server:call(?MODULE, {read, ID}),
-    #game{
-           card1 = C1,
-           card2 = C2
+    case gen_server:call(?MODULE, {read, ID}) of
+        error -> 0;
+        {ok, G} ->
+            #game{
+          card1 = C1,
+          card2 = C2
          } = G,
-    CA = case C1 of
-             0 -> 0;
-             _ -> 14
-         end,
-    CB = case C2 of
-             0 -> 0;
-             _ -> 14
-         end,
-    G#game{card1 = CA, card2 = CB}.
+            CA = case C1 of
+                     0 -> 0;
+                     _ -> 14
+                 end,
+            CB = case C2 of
+                     0 -> 0;
+                     _ -> 14
+                 end,
+            G#game{card1 = CA, card2 = CB}
+    end.
 
 read_round(ID, Rounds, Timeout) 
   when Timeout < 0 -> 0;
 read_round(ID, Rounds, Timeout) ->
     %timeout is in tenths of a second
     G = read(ID),
-    H = G#game.hands,
-    B = length(H) > Rounds,
     if
-        B -> G;
+        (G == 0) -> -1;
         true ->
-            timer:sleep(500),
-            read_round(ID, Rounds, Timeout-5)
+            H = G#game.hands,
+            B = length(H) > Rounds,
+            if
+                B -> G;
+                true ->
+                    timer:sleep(500),
+                    read_round(
+                      ID, Rounds, Timeout-5)
+            end
     end.
-
 
 
 test(1) ->

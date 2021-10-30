@@ -3,7 +3,7 @@
 -export([start_link/0,code_change/3,handle_call/3,handle_cast/2,handle_info/2,init/1,terminate/2,
          make_game/5,
          store/2, read/1, remove/1]).
--define(LOC, "planned_games.erl").
+-define(LOC, "planned_games.db").
 -record(game, {player1, player2, date, title = "", timer}).
 
 init(ok) -> 

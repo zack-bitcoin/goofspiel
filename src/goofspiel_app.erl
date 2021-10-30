@@ -26,7 +26,8 @@ start_http() ->
 		  {"/", http_handler, []},
 		  {"/[...]", file_handler, []}
 		 ]}]),
-    {ok, _} = cowboy:start_clear(http,
-				 [{ip, {0,0,0,0}}, {port, 8000}],
-				 #{env => #{dispatch => Dispatch}}),
+    {ok, _} = cowboy:start_clear(
+                http,
+                [{ip, {0,0,0,0}}, {port, 8000}],
+                #{env => #{dispatch => Dispatch}}),
     ok.

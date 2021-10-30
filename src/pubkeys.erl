@@ -3,7 +3,7 @@
 -export([start_link/0,code_change/3,handle_call/3,handle_cast/2,handle_info/2,init/1,terminate/2,
         store/2, read/1, remove/1]).
 %from id to pub.
--define(LOC, "pubkeys.erl").
+-define(LOC, "pubkeys.db").
 -record(db, {p2i = dict:new(), i2p = dict:new()}).
 init(ok) -> 
     process_flag(trap_exit, true),

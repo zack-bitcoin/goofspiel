@@ -1,44 +1,27 @@
-8
+when someone accepts your open offer, maybe it should take you directly to the game from the open offers page, or from the users.html page.
+
+find out why it is freezing during gameplay.
+
+
+
 * pages
- 1)active game board
-  - your score
-  - their score
-  - your pubkey and a link to your user info.
-  - their pubkey and a link to their user info.
-  - cards in your hand
-  - cards in their hand
-  - cards in the pool
- 2)user info (home page)
-  - optional message.
-  - history of games played.
-  - planned games.
-  - active games.
-  - make direct offer with this user link.
-  - link to open offers for games page.
-  - link to active games page.
- 3)planned game
+ * planned game
   - who will play, and links to user info.
   - date of when it will happen.
   - optional title.
   - game id.
- 4) make direct offer.
+ * make direct offer.
    - optional title
    - who with? (auto-fill from url)
    - date to start. 
- 5)direct offers to you.
+ * direct offers to you.
   - who made the offer.
   - when the game will happen.
   - optional title.
   - accept button.
- 6)make open offer.
-   - optional title
- 7)open offers for games
-  - link to make open offer page.
-  - who made the offer. a link to their user info.
-  - optional title for the game.
- 8)active games
+ * active games
   - current round.
-  - who is player.
+  - who is playing.
   - optional title
 
 garbage

@@ -2,27 +2,28 @@
 -behaviour(gen_server).
 -export([start_link/0,code_change/3,handle_call/3,handle_cast/2,handle_info/2,init/1,terminate/2,
 
-         empty_user/0,
+         empty_user/1,
 
-         read/1, store/1, store/0, remove/1,
+         read/1, store/1, remove/1,
          active_to_history/2,
          new_direct_offer/3,
          cancel_direct_offer/3,
          delay_offers/3,
+         delay_active/3,
          new_active_game/3,
          new_open_offer/2,
          remove_open_offer/2,
          set_message/2
 ]).
--define(LOC, "users.erl").
+-define(LOC, "users.db").
 -record(user, 
         {history = [], planned = [], active = [], 
          got_offers = [], 
-         gave_offers = [], 
+         gave_offers = [], name = "",
          open_offers = [], message = <<>>}).
 -record(db, {next = 1, users = dict:new()}).
 
-empty_user() -> #user{}.
+empty_user(Name) -> #user{name = Name}.
 
 init(ok) ->
     process_flag(trap_exit, true),
@@ -138,9 +139,7 @@ handle_call({store, User},
             X = #db{next = ID, 
                     users = Users}
            ) -> 
-    io:fwrite("in store\n"),
     Users2 = dict:store(ID, User, Users),
-    io:fwrite("leaving store\n"),
     {reply, ID, X#db{next = ID + 1,
                        users = Users2}};
 handle_call({read, ID}, _From, 
@@ -150,9 +149,9 @@ handle_call(_, _From, X) -> {reply, X, X}.
 
 read(X) ->
     gen_server:call(?MODULE, {read, X}).
-store() -> store(empty_user()).
 store(User) when is_record(User, user) ->
-    gen_server:call(?MODULE, {store, User}).
+    gen_server:call(?MODULE, {store, User});
+store(Name) -> store(empty_user(Name)).
 remove(X) ->
     gen_server:cast(?MODULE, {remove, X}).
 active_to_history(PID, GID) ->
@@ -226,7 +225,23 @@ delay_offers(Who, Many, Delay) ->
                     delay_offers(Who, Many, Delay-10)
             end
     end.
-    
+%it responds if a new game starts, otherwise it waits.
+delay_active(_Who, _Many, Delay)
+  when (Delay < 0) -> 0;
+delay_active(Who, Many, Delay) ->
+    case read(Who) of
+        error -> ok;
+        {ok, #user{active = L}} ->
+            B = (length(L) == Many),
+            if
+                not(B) -> L;
+                true ->
+                    timer:sleep(1000),
+                    delay_offers(
+                      Who, Many, Delay-10)
+            end
+end.
+     
 
 remove_from(_, []) -> [];
 remove_from(X, [X|T]) -> T;

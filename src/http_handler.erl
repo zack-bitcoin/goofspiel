@@ -23,50 +23,47 @@ init(_Type, Req, _Opts) ->
     {ok, Req, no_state}.
 terminate(_Reason, _Req, _State) -> ok.
 
-doit({user_id, Pub}) ->
-%  lookup user ID by pubkey or username.
-    case pubkeys:read(Pub) of
-        error -> 
-            case usernames:read(Pub) of
-                error -> {ok, "does not exist"};
-                Y -> Y
-            end;
-        X -> X
-    end;
-doit({user, ID}) -> users:read(ID);
-doit({nonce, UID}) -> nonces:check(UID);
-doit({open_offer, GID}) ->
+doit({account, ID}) -> users:read(ID);
+doit({nonce, UID}) -> 
+    nonces:check(UID);
+doit({read, 1, GID}) ->
     open_offers:read(GID);
-doit({direct_offer, GID}) ->
+doit({read, 2, GID}) ->
     direct_offers:read(GID);
-doit({planned_game, GID}) ->
+doit({read, 3, GID}) ->
     planned_games:read(GID);
-doit({active_game, GID}) ->
-    active_games:read(GID);
-doit({historical_game, GID}) ->
+doit({read, 4, GID}) ->
+    {ok, active_games:read(GID)};
+doit({read, 5, GID}) ->
     historical_games:read(GID);
-doit({delay_game, GID, RoundsSeen}) ->
+doit({read, 6, GID, RoundsSeen}) ->
     %responds when the game state advances to the next round.
     Delay = 300,%in tenths of a second.
-    active_games:read_round(GID, RoundsSeen, Delay);
-    
-doit({open_offers}) ->
+    {ok, active_games:read_round(GID, RoundsSeen, Delay)};
+doit({read, 7}) ->
     open_offers:all();
-
+doit({read, 8, Pub}) ->
+    %pubkey to account id
+    pubkeys:read(Pub);
+doit({read, 9, AID}) ->
+    %account id to username, or username to account id.
+    usernames:read(AID);
 
 
 %signed API
-doit({play, Stx}) -> 
+doit({x, 1, Stx}) -> 
+    %play
     F = fun(Tx) ->
-                {play, Pub, _, GID, PID, 
+                {x, Pub, _, 1, PID, GID, 
                  Card} = Tx,
                 {ok, Pub} = pubkeys:read(PID),
                 active_games:play(GID, PID, Card)
         end,
     signed_tx(Stx, F, false);
-doit({make_direct_offer, Stx}) ->
+doit({x, 2, Stx}) ->
+    %make direct offer
     F = fun(Tx) ->
-                {make_direct_offer, Pub, _, P1, P2,
+                {x, Pub, _, 2, P1, P2,
                 Date, Title, Timer} = Tx,
                 {ok, Pub} = pubkeys:read(P1),
                 G = direct_offer:make_game(
@@ -75,9 +72,10 @@ doit({make_direct_offer, Stx}) ->
                 users:new_direct_offer(P1, P2, GID)
         end,
     signed_tx(Stx, F, false);
-doit({cancel_direct_offer, Stx}) ->
+doit({x, 3, Stx}) ->
+    %cancel direct offer
     F = fun(Tx) ->
-                {cancel_direct_offer, Pub, _, 
+                {x, Pub, _, 3, 
                  P1, GID} = Tx,
                 {ok, Pub} = pubkeys:read(P1),
                 Offer = direct_offers:read(GID),
@@ -88,9 +86,10 @@ doit({cancel_direct_offer, Stx}) ->
                 users:cancel_direct_offer(P1, P2, GID)
         end,
     signed_tx(Stx, F, false);
-doit({accept_direct_offer, Stx}) ->
+doit({x, 4, Stx}) ->
+    %accept direct offer
     F = fun(Tx) ->
-                {accept_direct_offer, Pub2, _, 
+                {x, Pub2, _, 4,
                  P2, GID} = Tx,
                 {ok, Pub2} = pubkeys:read(P2),
                 Offer = direct_offers:read(GID),
@@ -107,30 +106,44 @@ doit({accept_direct_offer, Stx}) ->
                 users:new_active_game(P1, P2, GID)
         end,
     signed_tx(Stx, F, false);
-doit({delay_offers, Stx}) ->
+doit({x, 5, Stx}) ->
+    %delay offers
     %responds when you receive a direct offer to play a game.
     F = fun(Tx) ->
-                {delay_offers, Pub, _, 
+                {x, Pub, _, 5,
                  P1, N} = Tx,
                 {ok, Pub} = pubkeys:read(P1),
                 Delay = 300,%in tenths of a second
                 users:delay_offers(P1, N, Delay)
         end,
     signed_tx(Stx, F, false);
-doit({make_open_offer, Stx}) ->
+doit({x, 50, Stx}) ->
+    %delay actives
+    %responds when a new active game starts
     F = fun(Tx) ->
-                {make_open_offer, Pub, _, 
+                {x, Pub, _, 50,
+                 P1, N} = Tx,
+                {ok, Pub} = pubkeys:read(P1),
+                Delay = 300,%in tenths of a second
+                users:delay_active(P1, N, Delay)
+        end,
+    signed_tx(Stx, F, false);
+doit({x, 6, Stx}) ->
+    %make open offer
+    F = fun(Tx) ->
+                {x, Pub, _, 6,
                  P1, Title, TimeSpan} = Tx,
                 {ok, Pub} = pubkeys:read(P1),
                 G = open_offers:make_game(
-                  Pub, Title, TimeSpan),
+                  P1, Title, TimeSpan),
                 GID = open_offers:store(G),
                 users:new_open_offer(P1, GID)%todo
         end,
     signed_tx(Stx, F, false);
-doit({cancel_open_offer, Stx}) ->
+doit({x, 7, Stx}) ->
+    %cancel open offer
     F = fun(Tx) ->
-                {cancel_open_offer, Pub, _,
+                {x, Pub, _, 7,
                 P1, GID} = Tx,
                 {ok, Pub} = pubkeys:read(P1),
                 {ok, Offer} = open_offers:read(GID),
@@ -139,9 +152,10 @@ doit({cancel_open_offer, Stx}) ->
                 users:remove_open_offer(P1, GID)
         end,
     signed_tx(Stx, F, false);
-doit({accept_open_offer, Stx}) ->
+doit({x, 8, Stx}) ->
+    %accept open offer
     F = fun(Tx) ->
-                {accept_open_offer, Pub2, _,
+                {x, Pub2, _, 8,
                  P2, GID} = Tx,
                 {ok, Pub2} = pubkeys:read(P2),
                 {ok, Offer} = open_offers:read(GID),
@@ -158,18 +172,21 @@ doit({accept_open_offer, Stx}) ->
         end,
     signed_tx(Stx, F, false);
 doit({create_account, Stx}) ->
+    true = signing:verify(Stx),
+    Tx = element(2, Stx),
+    {create_account, Pub, _, Name, _} = Tx,
+    case usernames:read(Name) of
+        {ok, _} -> {ok, 0};
+        error -> %name isn't used already
+            UID = users:store(Name),
+            pubkeys:store(UID, Pub),
+            usernames:store(Name, UID),
+            {ok, UID}
+    end;
+doit({x, 9, Stx}) ->
+    %set message
     F = fun(Tx) ->
-                {create_account, Pub, _, Name} = Tx,
-                error = usernames:read(Name),%name isn't used already
-                UID = users:store(),
-                pubkeys:store(UID, Pub),
-                usernames:store(Name, UID),
-                UID
-        end,
-    signed_tx(Stx, F, false);
-doit({set_message, Stx}) ->
-    F = fun(Tx) ->
-                {set_message, Pub, _, P1, Msg} = Tx,
+                {x, Pub, _, 9, P1, Msg} = Tx,
                 {ok, Pub} = pubkeys:read(P1),
                 users:set_message(P1, Msg)
         end,
@@ -179,17 +196,22 @@ doit({test}) ->
     {ok, <<"success">>}.
 
 signed_tx(Stx, F, _AdminCheck) ->
+    
     true = signing:verify(Stx),
     Tx = element(2, Stx),
-    Pub = element(2, Tx),
+    %Pub = element(2, Tx),
+    ID = element(5, Tx),
     Nonce = element(3, Tx),
-    %true = not(AdminCheck) or 
-    %    admin:check(Pub),
-    PrevNonce = nonces:check(Pub),
-    true = Nonce > PrevNonce,
-    X = F(Tx),
-    nonces:update(Pub, Nonce),
-    {ok, X}.
+    {ok, PrevNonce} = nonces:check(ID),
+    B = Nonce > PrevNonce,
+    if
+        B ->
+            X = F(Tx),
+            nonces:update(ID, Nonce),
+            {ok, X};
+        true ->
+            {ok, "nonce error"}
+    end.
 
 test() ->
     {Pub, Priv} = signing:new_key(),

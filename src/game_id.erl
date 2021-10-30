@@ -1,9 +1,9 @@
 -module(game_id).
 -behaviour(gen_server).
 -export([start_link/0,code_change/3,handle_call/3,handle_cast/2,handle_info/2,init/1,terminate/2,
-         read/0
+         new/0
 ]).
--define(LOC, "game_id.erl").
+-define(LOC, "game_id.db").
 init(ok) -> 
     process_flag(trap_exit, true),
     X = db:read(?LOC),
@@ -24,5 +24,5 @@ handle_call(read, _From, X) ->
     {reply, X, X+1};
 handle_call(_, _From, X) -> {reply, X, X}.
 
-read() ->
+new() ->
     gen_server:call(?MODULE, read).
