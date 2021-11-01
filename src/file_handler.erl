@@ -50,7 +50,7 @@ handle(Req, State) ->
                 io:fwrite("ext file handler block access to: "),
                 io:fwrite(X),
                 io:fwrite("\n"),
-                <<"/main.html">>
+                <<"/introduction.html">>
            end,
     %File = << PrivDir/binary, <<"/external_web">>/binary, F/binary>>,
     File = << PrivDir/binary, F/binary>>,

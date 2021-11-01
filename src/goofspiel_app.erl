@@ -28,6 +28,6 @@ start_http() ->
 		 ]}]),
     {ok, _} = cowboy:start_clear(
                 http,
-                [{ip, {0,0,0,0}}, {port, 8000}],
+                [{ip, {0,0,0,0}}, {port, 8001}],
                 #{env => #{dispatch => Dispatch}}),
     ok.
