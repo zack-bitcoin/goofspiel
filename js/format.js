@@ -602,10 +602,17 @@ function load_keys(){
     if(!(v)){
         window.open("login.html", "_self");
     }
-    var [priv, aid] = JSON.parse(localStorage.getItem("goofspiel"));
-    var key = keys.keys_from_priv(priv);
-    keys.set_keys(key);
-    return(aid);
+    return(load_keys2());
+};
+function load_keys2(){
+    var v = localStorage.getItem("goofspiel");
+    if(v){
+        console.log(v);
+        var [priv, aid] = JSON.parse(v);
+        var key = keys.keys_from_priv(priv);
+        keys.set_keys(key);
+        return(aid);
+    };
 };
 
 async function game_launcher(uid){

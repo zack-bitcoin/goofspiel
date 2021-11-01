@@ -1,6 +1,19 @@
-(function(){
+(async function(){
     var div = document.createElement("div");
     document.body.appendChild(div);
+
+    //already logged in?
+    var aid = load_keys2();
+    if(aid){
+        var c = document.createElement("a");
+        c.href="user.html";
+        var user = await rpc.apost(
+            ["read", 9, aid]);
+        c.innerHTML = "continue as user: ".concat(atob(user));
+        div.appendChild(c);
+        div.appendChild(br());
+        div.appendChild(br());
+    }
     var username_input = text_input("username: ", div);
     div.appendChild(br());
     div.appendChild(br());
