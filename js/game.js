@@ -246,7 +246,7 @@
         var elapsed = now - starts;
         var left = time_span - elapsed;
         if(left < 0){
-            div.innerHTML("out of time");
+            div.innerHTML = "out of time";
             return(0);
         }
         //console.log([starts, now]);
