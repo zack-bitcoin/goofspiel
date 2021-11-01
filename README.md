@@ -1,9 +1,9 @@
 Goofspiel
 =====
 
-A work in progress. [See the todo list to learn what we need next](todo)
-
 A game server to play goofspiel.
+[try it out here](http://46.101.185.98:8001/introduction.html)
+
 Uses public key cryptography for user security.
 Remembers a history of games you won and loss.
 
@@ -13,7 +13,7 @@ sh start.sh
 ```
 
 after you turn it on, the local page for users can be seen here:
-http://127.0.0.1:8000/home.html
+http://127.0.0.1:8001/home.html
 
 it automatically starts in the background. You can attach to it to be able to run commands like this:
 ```
@@ -27,3 +27,4 @@ halt().
 ```
 
 or you can detatch from the running process, and return it to the background by holding the Control key, and clicking the 'D' key.
+
