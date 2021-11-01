@@ -641,7 +641,7 @@ async function active_game_launcher(many_active_games, uid){
         window.open("game.html?gid=".concat(gid), "_self");
     } else {
         return(active_game_launcher(
-            many_active_games));
+            many_active_games, uid));
     };
 };
 
