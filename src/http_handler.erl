@@ -210,7 +210,7 @@ signed_tx(Stx, F, _AdminCheck) ->
             nonces:update(ID, Nonce),
             {ok, X};
         true ->
-            {ok, "nonce error"}
+            {ok, <<"nonce error">>}
     end.
 
 test() ->
