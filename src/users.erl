@@ -237,7 +237,7 @@ delay_active(Who, Many, Delay) ->
                 not(B) -> L;
                 true ->
                     timer:sleep(1000),
-                    delay_offers(
+                    delay_active(
                       Who, Many, Delay-10)
             end
 end.

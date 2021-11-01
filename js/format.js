@@ -607,3 +607,32 @@ function load_keys(){
     keys.set_keys(key);
     return(aid);
 };
+
+async function game_launcher(uid){
+    var nonce = await rpc.apost(
+        ["nonce", uid]);
+    var tx = ["x", keys.pub(), nonce+1, 50, uid, -1];
+    var stx = keys.sign(tx);
+    var x = await rpc.apost(["x", 50, stx]);
+    active_game_launcher(x.length - 1, uid);
+};
+
+async function active_game_launcher(many_active_games, uid){
+    //["x", 50, stx]
+    //["x", pub, nonce, 50, pid, NumOfActiveGames]
+    var nonce = await rpc.apost(
+        ["nonce", uid]);
+    var tx = ["x", keys.pub(), nonce+1, 50, uid, many_active_games];
+    var stx = keys.sign(tx);
+    var x = await rpc.apost(["x", 50, stx]);
+    if(!(x === 0)){
+        //launch game
+        //console.log("game starting");
+        var gid = x[1];
+        window.open("game.html?gid=".concat(gid), "_self");
+    } else {
+        return(active_game_launcher(
+            many_active_games));
+    };
+};
+

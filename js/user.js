@@ -4,10 +4,11 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     var uid = urlParams.get('uid');
-
+    var aid = load_keys();
     if(!(uid)){
-        uid = load_keys();
+        uid = aid;
     } else {
+        //load_keys();
         uid = uid.replace(/\ /g, "+");
         uid = parseInt(uid);
         console.log(uid);
@@ -57,12 +58,11 @@
     //give a link to the page that lists open offers.
     
     //display user id, username, message,
-    //links to active games
     //links to received offers
     //links to given open offer
     //links to given direct offers
     //links to planned games,
-    //links to historical games,
+    game_launcher(aid);
 
     async function list_active_games(l, div){
         if(l.length === 0){

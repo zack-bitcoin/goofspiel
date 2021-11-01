@@ -23,6 +23,8 @@
     var offer_list = document.createElement("div");
     div.appendChild(offer_list);
 
+    game_launcher(aid);
+    
     refresh_list();
 
     async function make_offer(){

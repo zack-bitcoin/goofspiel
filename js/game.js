@@ -21,30 +21,43 @@
         var x = await rpc.apost(["read", 6, gid, hands]);
         console.log("cron hands");
         console.log(x);
-        if(!(x === 0)){
+        if(x === -1){
+            console.log("game ended or never existed.");
+            window.open("history.html?gid=".concat(gid), "_self");
+            return(0);
+        } else if(x === 0){
+            console.log("cron continues");
+            return(cron(hands));
+        } else {
+            console.log("next round was played. redraw the board.");
             draw();
             return(cron(hands + 1));
-        } else {
-            return(cron(hands));
         };
     };
     async function draw(){
 
         var temp_div = document.createElement("div");
         // look up the game board
-        console.log("lookup");
         var board = await rpc.apost(["read", 6, gid, -1]);
-        console.log(board);
-        if((board === 0)||(board === -1)){
-        //if(false){
+        if(board === -1){
             console.log("game ended");
             window.open("history.html?gid=".concat(gid), "_self");
+            return(0);
         };
         console.log("lookup2");
         //{"game", hands, player1, player2, date,
         // title, card1, card2, prize, time_span,
         // timer}
         var hands = board[1].slice(1);
+        var time_span = board[9];
+        if(hands.length === 0){
+            time_span = 1200;
+        }
+        var timer = board[10];
+        var clock = make_clock(timer, time_span);
+        temp_div.appendChild(clock);
+        temp_div.appendChild(br());
+        
         var player1 = board[2];
         var player2 = board[3];
 
@@ -225,5 +238,32 @@
             return(calculate_points(
                 r, p1, p2));
         };
+    };
+    function clock_cron(div, starts, time_span){
+        var now = Math.round(Date.now()/100);
+        var elapsed = now - starts;
+        var left = time_span - elapsed;
+        if(left < 0){
+            div.innerHTML("out of time");
+            return(0);
+        }
+        //console.log([starts, now]);
+        div.innerHTML = (left/10).toFixed(1);
+        setTimeout(function(){
+            return(clock_cron(
+                div, starts, time_span));
+        }, 90);
+    };
+    function make_clock(starts, time_span){
+        console.log(starts);
+        starts = starts.slice(1);
+        var b = starts[0] * 10000000;
+        var c = starts[1] * 10;
+        var e = Math.round(starts[2]/100000);
+        var s = b + c + e;
+
+        var r = document.createElement("div");
+        clock_cron(r, s, time_span);
+        return(r);
     };
 })();
