@@ -28,8 +28,6 @@ handle(Req, State) ->
 	       <<"/register.html">> -> F0;
 	       <<"/register.js">> -> F0;
 	       <<"/links.js">> -> F0;
-	       <<"/home.html">> -> F0;
-	       <<"/admin.html">> -> F0;
 	       <<"/keys.js">> -> F0;
 	       <<"/signing.js">> -> F0;
 	       <<"/files.js">> -> F0;
@@ -44,8 +42,6 @@ handle(Req, State) ->
 	       <<"/sjcl.js">> -> F0;
 	       <<"/signing.js">> -> F0;
 	       <<"/server.js">> -> F0;
-	       <<"/main.js">> -> F0;
-	       <<"/admin.js">> -> F0;
                X -> 
                 io:fwrite("ext file handler block access to: "),
                 io:fwrite(X),
