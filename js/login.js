@@ -4,15 +4,24 @@
 
     //already logged in?
     var aid = load_keys2();
+    if(aid === "r"){
+        window.open("register.html", "_self");
+    }
     if(aid){
+        console.log(aid);
         var c = document.createElement("a");
         c.href="user.html";
         var user = await rpc.apost(
             ["read", 9, aid]);
-        c.innerHTML = "continue as user: ".concat(atob(user));
-        div.appendChild(c);
-        div.appendChild(br());
-        div.appendChild(br());
+        if(!(user === "r")){
+            console.log(user);
+            c.innerHTML = "continue as user: ".concat(atob(user));
+            div.appendChild(c);
+            div.appendChild(br());
+            div.appendChild(br());
+        } else {
+            window.open("register.html", "_self");
+        }
     }
     var username_input = text_input("username: ", div);
     div.appendChild(br());

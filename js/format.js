@@ -629,7 +629,9 @@ async function active_game_launcher(many_active_games, uid){
     //["x", pub, nonce, 50, pid, NumOfActiveGames]
     var nonce = await rpc.apost(
         ["nonce", uid]);
+    console.log(nonce);
     var tx = ["x", keys.pub(), nonce+1, 50, uid, many_active_games];
+    console.log(JSON.stringify(tx));
     var stx = keys.sign(tx);
     var x = await rpc.apost(["x", 50, stx]);
     if(!(x === 0)){
